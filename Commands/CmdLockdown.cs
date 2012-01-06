@@ -1,19 +1,16 @@
 /*
-	Copyright 2011 MCForge
-		
-	Dual-licensed under the	Educational Community License, Version 2.0 and
-	the GNU General Public License, Version 3 (the "Licenses"); you may
-	not use this file except in compliance with the Licenses. You may
-	obtain a copy of the Licenses at
-	
-	http://www.opensource.org/licenses/ecl2.php
-	http://www.gnu.org/licenses/gpl-3.0.html
-	
-	Unless required by applicable law or agreed to in writing,
-	software distributed under the Licenses are distributed on an "AS IS"
-	BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
-	or implied. See the Licenses for the specific language governing
-	permissions and limitations under the Licenses.
+Copyright 2011 MCForge
+Dual-licensed under the Educational Community License, Version 2.0 and
+the GNU General Public License, Version 3 (the "Licenses"); you may
+not use this file except in compliance with the Licenses. You may
+obtain a copy of the Licenses at
+http://www.opensource.org/licenses/ecl2.php
+http://www.gnu.org/licenses/gpl-3.0.html
+Unless required by applicable law or agreed to in writing,
+software distributed under the Licenses are distributed on an "AS IS"
+BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the Licenses for the specific language governing
+permissions and limitations under the Licenses.
 */
 using System;
 using System.IO;
@@ -24,7 +21,7 @@ namespace MCForge
 {
     public class CmdLockdown : Command
     {
-        // The command's name, in all lowercase.  What you'll be putting behind the slash when using it.
+        // The command's name, in all lowercase. What you'll be putting behind the slash when using it.
         public override string name { get { return "lockdown"; } }
 
         // Command's shortcut (please take care not to use an existing one, or you may have issues.
@@ -33,16 +30,16 @@ namespace MCForge
         // Determines which submenu the command displays in under /help.
         public override string type { get { return "other"; } }
 
-        // Determines whether or not this command can be used in a museum.  Block/map altering commands should be made false to avoid errors.
+        // Determines whether or not this command can be used in a museum. Block/map altering commands should be made false to avoid errors.
         public override bool museumUsable { get { return false; } }
 
-        // Determines the command's default rank.  Valid values are:
+        // Determines the command's default rank. Valid values are:
         // LevelPermission.Nobody, LevelPermission.Banned, LevelPermission.Guest
         // LevelPermission.Builder, LevelPermission.AdvBuilder, LevelPermission.Operator, LevelPermission.Admin
         public override LevelPermission defaultRank { get { return LevelPermission.Operator; } }
 
         // This is where the magic happens, naturally.
-        // p is the player object for the player executing the command.  message is everything after the command invocation itself.
+        // p is the player object for the player executing the command. message is everything after the command invocation itself.
         public override void Use(Player p, string message)
         {
             if (!Directory.Exists("text/lockdown"))
@@ -86,56 +83,64 @@ namespace MCForge
 
                 if (param[0] == "player")
                 {
-                    	Player who = Player.Find(param[1]);
-                    	
-                    if (Server.devs.Contains(who.name))
+                    if  (p.group.permission >= LevelPermission.Operator )
                     {
-                        Player.SendMessage(p, "You can't lockdown a dev!");
-                        return;
-                    }
+                        Player who = Player.Find(param[1]);
 
-                    if (who == null)
-                    {
-                        Player.SendMessage(p, "There is no player with such name online");
-                        return;
-                    }
-
-
-                    if (!who.jailed)
-                    {
-                        if (p != null)
+                        if (Server.devs.Contains(who.name))
                         {
-                            if (who.group.Permission >= p.group.Permission)
-                            {
-                                Player.SendMessage(p, "Cannot lock down someone of equal or greater rank.");
-                                return;
-                            }
+                            Player.SendMessage(p, "You can't lockdown a dev!");
+                            return;
                         }
-                        if (p != null && who.level != p.level)
+
+                        if (who == null)
                         {
-                            Player.SendMessage(p, "Moving player to your map...");
-                            Command.all.Find("goto").Use(who, p.level.name);
-                            int waits = 0;
-                            while (who.Loading)
-                            {
-                                Thread.Sleep(500);
-                                // If they don't load in 10 seconds, eff it.
-                                if (waits++ == 20)
-                                    break;
-                            }
+                            Player.SendMessage(p, "There is no player with such name online");
+                            return;
                         }
-                        Player.GlobalDie(who, false);
-                        who.jailed = true;
-                        Player.GlobalMessage(who.color + who.name + Server.DefaultColor + " has been locked down!");
-                        Player.GlobalMessageOps("Locked by: " + ((p == null) ? "Console" : p.name));
-                        return;
+
+
+                        if (!who.jailed)
+                        {
+                            if (p != null)
+                            {
+                                if (who.group.Permission >= p.group.Permission)
+                                {
+                                    Player.SendMessage(p, "Cannot lock down someone of equal or greater rank.");
+                                    return;
+                                }
+                            }
+                            if (p != null && who.level != p.level)
+                            {
+                                Player.SendMessage(p, "Moving player to your map...");
+                                Command.all.Find("goto").Use(who, p.level.name);
+                                int waits = 0;
+                                while (who.Loading)
+                                {
+                                    Thread.Sleep(500);
+                                    // If they don't load in 10 seconds, eff it.
+                                    if (waits++ == 20)
+                                        break;
+                                }
+                            }
+                            Player.GlobalDie(who, false);
+                            who.jailed = true;
+                            Player.GlobalMessage(who.color + who.name + Server.DefaultColor + " has been locked down!");
+                            Player.GlobalMessageOps("Locked by: " + ((p == null) ? "Console" : p.name));
+                            return;
+                        }
+                        else
+                        {
+                            who.jailed = false;
+                            Player.GlobalMessage(who.color + who.name + Server.DefaultColor + " has been unlocked.");
+                            Player.GlobalMessageOps("Unlocked by: " + ((p == null) ? "Console" : p.name));
+                            return;
+                        }
                     }
                     else
                     {
-                        who.jailed = false;
-                        Player.GlobalMessage(who.color + who.name + Server.DefaultColor + " has been unlocked.");
-                        Player.GlobalMessageOps("Unlocked by: " + ((p == null) ? "Console" : p.name));
-                        return;
+                        Player.SendMessage(p, "You need to be OP+ to lockdown Players");
+                        return;	
                     }
                 }
             }
