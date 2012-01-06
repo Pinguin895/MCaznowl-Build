@@ -86,8 +86,8 @@ namespace MCForge
 
                 if (param[0] == "player")
                 {
-                    Player who = Player.Find(param[1]);
-
+                    	Player who = Player.Find(param[1]);
+                    	
                     if (Server.devs.Contains(who.name))
                     {
                         Player.SendMessage(p, "You can't lockdown a dev!");
